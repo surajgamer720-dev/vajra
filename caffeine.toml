@@ -1,8 +1,8 @@
 manifest_version = "0.1.0"
 
 [project]
-id = "my-app"
-name = "my-app"
+id = "019c99fd-4697-757c-a4b2-a75c115da730"
+name = "vajra"
 
 [workspace]
 include = ["src/**"]
