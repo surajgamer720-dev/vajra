@@ -1,0 +1,115 @@
+type UserProfilePublic = 
+ record {
+   createdAt: Timestamp;
+   name: text;
+   onboardingComplete: bool;
+ };
+type Timestamp = int;
+type StreakPublic = 
+ record {
+   activityId: text;
+   currentStreak: nat;
+   freezeActiveDate: opt text;
+   freezeTokensEarned: nat;
+   freezeTokensUsed: nat;
+   lastCompletedDate: opt text;
+   longestStreak: nat;
+   totalDaysCompleted: nat;
+ };
+type SavedQuote = 
+ record {
+   quoteId: text;
+   savedAt: Timestamp;
+ };
+type MilestoneUnlock = 
+ record {
+   activityId: text;
+   milestoneDay: nat;
+   unlockedAt: Timestamp;
+ };
+type FreezeStatus = 
+ record {
+   freezeActive: bool;
+   freezeDate: opt text;
+   tokensAvailable: nat;
+ };
+type FreezeResult = 
+ record {
+   message: text;
+   success: bool;
+ };
+type DailyCompletion = 
+ record {
+   activityId: text;
+   completedAt: Timestamp;
+   date: text;
+ };
+type CompleteResult = 
+ record {
+   isFreezeEarned: bool;
+   isNewMilestone: bool;
+   milestoneDay: opt nat;
+   streak: nat;
+ };
+type BreakLog = 
+ record {
+   activityId: text;
+   breakDate: text;
+   createdAt: Timestamp;
+   id: text;
+   reason: text;
+   streakLengthAtBreak: nat;
+   wasManual: bool;
+ };
+type ActivityStats = 
+ record {
+   autoBreaks: nat;
+   currentStreak: nat;
+   freezesUsed: nat;
+   longestStreak: nat;
+   manualBreaks: nat;
+   totalDays: nat;
+ };
+type Activity = 
+ record {
+   createdAt: Timestamp;
+   emoji: text;
+   id: text;
+   isPredefined: bool;
+   name: text;
+   reminderTime: opt text;
+ };
+service : {
+  addActivity: (name: text, emoji: text, reminderTime: opt text) ->
+   (Activity);
+  applyFreezeToken: (activityId: text, date: text) -> (FreezeResult);
+  completeActivity: (activityId: text, date: text) -> (CompleteResult);
+  getActivities: () -> (vec Activity);
+  getActivityStats: (activityId: text) -> (ActivityStats);
+  getAllBreakLogs: () -> (vec BreakLog);
+  getAllMilestones: () -> (vec record {
+                                 text;
+                                 vec MilestoneUnlock;
+                               });
+  getAllStreaks: () -> (vec record {
+                              text;
+                              StreakPublic;
+                            });
+  getBreakLogs: (activityId: text) -> (vec BreakLog);
+  getCompletionsForMonth: (activityId: text, yearMonth: text) ->
+   (vec DailyCompletion);
+  getFreezeStatus: (activityId: text) -> (FreezeStatus);
+  getSavedQuotes: () -> (vec SavedQuote);
+  getStreakInfo: (activityId: text) -> (opt StreakPublic);
+  getUnlockedMilestones: (activityId: text) -> (vec MilestoneUnlock);
+  getUserProfile: () -> (opt UserProfilePublic);
+  initializeDefaultActivities: () -> ();
+  isCompletedToday: (activityId: text, date: text) -> (bool);
+  recordBreak: (activityId: text, reason: text, wasManual: bool,
+   streakLength: nat, date: text) -> (BreakLog);
+  removeActivity: (id: text) -> (bool);
+  saveQuote: (quoteId: text) -> ();
+  setUserProfile: (name: text) -> ();
+  unsaveQuote: (quoteId: text) -> ();
+  updateActivityReminder: (id: text, reminderTime: opt text) -> (bool);
+}

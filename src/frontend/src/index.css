@@ -1,0 +1,383 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-display: "Instrument Serif", serif;
+    --font-body: "General Sans", sans-serif;
+    --font-mono: "Geist Mono", monospace;
+    --radius: 0.5rem;
+
+    --background: 0.99 0 0;
+    --foreground: 0.15 0 0;
+    --card: 1.0 0 0;
+    --card-foreground: 0.15 0 0;
+    --popover: 1.0 0 0;
+    --popover-foreground: 0.15 0 0;
+
+    --primary: 0.35 0 0;
+    --primary-foreground: 0.98 0 0;
+
+    --secondary: 0.95 0 0;
+    --secondary-foreground: 0.25 0 0;
+    --muted: 0.95 0 0;
+    --muted-foreground: 0.5 0 0;
+
+    --accent: 0.35 0 0;
+    --accent-foreground: 0.98 0 0;
+
+    --destructive: 0.55 0.22 25;
+    --destructive-foreground: 0.98 0 0;
+
+    --border: 0.9 0 0;
+    --input: 0.9 0 0;
+    --ring: 0.35 0 0;
+
+    --chart-1: 0.65 0.22 40;
+    --chart-2: 0.6 0.12 185;
+    --chart-3: 0.4 0.07 227;
+    --chart-4: 0.83 0.19 84;
+    --chart-5: 0.77 0.19 70;
+
+    --sidebar: 0.98 0 0;
+    --sidebar-foreground: 0.15 0 0;
+    --sidebar-primary: 0.35 0 0;
+    --sidebar-primary-foreground: 0.98 0 0;
+    --sidebar-accent: 0.95 0 0;
+    --sidebar-accent-foreground: 0.25 0 0;
+    --sidebar-border: 0.9 0 0;
+    --sidebar-ring: 0.35 0 0;
+  }
+
+  .dark {
+    --background: 0.108 0.05 309;
+    --foreground: 0.92 0.04 279;
+    --card: 0.16 0.06 309;
+    --card-foreground: 0.92 0.04 279;
+    --popover: 0.21 0.07 309;
+    --popover-foreground: 0.92 0.04 279;
+
+    --primary: 0.65 0.19 70;
+    --primary-foreground: 0.108 0.05 309;
+
+    --secondary: 0.19 0.06 309;
+    --secondary-foreground: 0.88 0.04 279;
+    --muted: 0.19 0.06 309;
+    --muted-foreground: 0.64 0.04 279;
+
+    --accent: 0.72 0.21 291;
+    --accent-foreground: 0.108 0.05 309;
+
+    --destructive: 0.62 0.21 17;
+    --destructive-foreground: 0.92 0.04 279;
+
+    --border: 0.25 0.06 309;
+    --input: 0.25 0.06 309;
+    --ring: 0.65 0.19 70;
+
+    --chart-1: 0.65 0.19 70;
+    --chart-2: 0.57 0.18 47;
+    --chart-3: 0.72 0.21 291;
+    --chart-4: 0.62 0.21 17;
+    --chart-5: 0.82 0.19 119;
+
+    --sidebar: 0.16 0.06 309;
+    --sidebar-foreground: 0.92 0.04 279;
+    --sidebar-primary: 0.65 0.19 70;
+    --sidebar-primary-foreground: 0.108 0.05 309;
+    --sidebar-accent: 0.72 0.21 291;
+    --sidebar-accent-foreground: 0.108 0.05 309;
+    --sidebar-border: 0.25 0.06 309;
+    --sidebar-ring: 0.65 0.19 70;
+  }
+
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+  }
+}
+
+@font-face {
+  font-family: "Instrument Serif";
+  src: url("/assets/fonts/InstrumentSerif-Italic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+  size-adjust: 100%;
+}
+
+@font-face {
+  font-family: "General Sans";
+  src: url("/assets/fonts/GeneralSans.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+  size-adjust: 100%;
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  src: url("/assets/fonts/GeistMono.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+  size-adjust: 100%;
+}
+
+/* ─── Custom CSS Properties ────────────────────────────────────────────────── */
+:root {
+  --color-fire-core: oklch(0.88 0.21 70);
+  --color-fire-outer: oklch(0.65 0.19 40);
+  --color-gold-aura: oklch(0.82 0.19 84);
+  --color-bronze: oklch(0.58 0.13 55);
+  --color-silver: oklch(0.75 0.03 270);
+  --color-diamond: oklch(0.85 0.18 220);
+}
+
+@layer utilities {
+  .transition-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* ─── Fire glow tiers ──────────────────────────────────────────────────── */
+  .fire-glow {
+    box-shadow: 0 0 16px oklch(var(--primary) / 0.8), 0 0 32px
+      oklch(var(--primary) / 0.4);
+  }
+
+  .fire-glow-medium {
+    box-shadow: 0 0 20px var(--color-fire-core), 0 0 40px
+      oklch(var(--primary) / 0.6), 0 0 64px oklch(var(--primary) / 0.25);
+  }
+
+  .fire-glow-large {
+    box-shadow: 0 0 24px var(--color-fire-core), 0 0 48px
+      var(--color-fire-outer), 0 0 80px oklch(var(--primary) / 0.35), 0 0 120px
+      oklch(var(--primary) / 0.15);
+  }
+
+  .fire-glow-inferno {
+    box-shadow: 0 0 32px var(--color-fire-core), 0 0 64px
+      var(--color-fire-outer), 0 0 96px oklch(0.75 0.19 55 / 0.5), 0 0 160px
+      oklch(var(--primary) / 0.25);
+    animation: fire-flicker 0.4s ease-in-out infinite;
+  }
+
+  .fire-glow-intense {
+    box-shadow: 0 0 24px oklch(var(--primary)), 0 0 48px
+      oklch(var(--primary) / 0.6), 0 0 64px oklch(var(--primary) / 0.3);
+  }
+
+  /* ─── Badge tiers ──────────────────────────────────────────────────────── */
+  .badge-bronze {
+    background: linear-gradient(
+      135deg,
+      oklch(0.52 0.13 55),
+      oklch(0.62 0.15 60)
+    );
+    box-shadow: 0 0 12px var(--color-bronze), 0 0 24px oklch(0.58 0.13 55 / 0.4);
+    color: oklch(0.95 0.04 70);
+  }
+
+  .badge-silver {
+    background: linear-gradient(
+      135deg,
+      oklch(0.68 0.04 270),
+      oklch(0.82 0.03 270)
+    );
+    box-shadow: 0 0 12px var(--color-silver), 0 0 24px
+      oklch(0.75 0.03 270 / 0.4);
+    color: oklch(0.15 0.02 270);
+  }
+
+  .badge-gold {
+    background: linear-gradient(135deg, oklch(0.6 0.18 70), oklch(0.82 0.2 84));
+    box-shadow: 0 0 16px var(--color-gold-aura), 0 0 32px
+      oklch(0.65 0.19 70 / 0.5);
+    color: oklch(0.12 0.04 309);
+  }
+
+  .badge-diamond {
+    background: linear-gradient(
+      135deg,
+      oklch(0.72 0.21 220),
+      oklch(0.88 0.18 200)
+    );
+    box-shadow: 0 0 20px var(--color-diamond), 0 0 40px
+      oklch(0.72 0.21 220 / 0.5), 0 0 60px oklch(0.85 0.18 220 / 0.25);
+    color: oklch(0.12 0.04 309);
+  }
+
+  /* ─── Badge radiant (generic) ──────────────────────────────────────────── */
+  .badge-radiant {
+    box-shadow: inset 0 0 16px oklch(var(--primary) / 0.3), 0 0 20px
+      oklch(var(--primary) / 0.4);
+  }
+
+  /* ─── Typography ────────────────────────────────────────────────────────── */
+  .quote-text {
+    @apply font-display italic text-lg leading-relaxed;
+  }
+
+  /* ─── Smoke puff ────────────────────────────────────────────────────────── */
+  .smoke-puff {
+    animation: smoke-puff 0.6s ease-out forwards;
+  }
+
+  /* ─── Text scale ─────────────────────────────────────────────────────────── */
+  .text-scale-small {
+    font-size: 14px;
+  }
+
+  .text-scale-large {
+    font-size: 18px;
+  }
+}
+
+/* ─── Accessibility: Reduced motion ───────────────────────────────────────── */
+.no-motion * {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* ─── Accessibility: High contrast ───────────────────────────────────────── */
+.high-contrast {
+  --foreground: 1 0 0;
+  --card-foreground: 1 0 0;
+  --popover-foreground: 1 0 0;
+  --muted-foreground: 0.88 0 0;
+  --border: 0.6 0.08 309;
+  --input: 0.6 0.08 309;
+}
+
+.high-contrast body {
+  -webkit-font-smoothing: auto;
+}
+
+.high-contrast .bg-card {
+  --tw-bg-opacity: 1;
+  background-color: oklch(0.1 0.06 309 / var(--tw-bg-opacity));
+}
+
+.high-contrast .text-muted-foreground {
+  color: oklch(0.78 0.04 279);
+}
+
+.high-contrast .border-border {
+  border-color: oklch(0.45 0.08 309);
+}
+
+/* ─── Additional keyframes ─────────────────────────────────────────────────── */
+
+@keyframes fire-flicker {
+  0%,
+  100% {
+    transform: scaleY(1) scaleX(1) rotate(-0.5deg);
+    filter: brightness(1);
+  }
+  25% {
+    transform: scaleY(1.04) scaleX(0.97) rotate(0.5deg);
+    filter: brightness(1.08);
+  }
+  50% {
+    transform: scaleY(0.97) scaleX(1.02) rotate(-0.3deg);
+    filter: brightness(0.96);
+  }
+  75% {
+    transform: scaleY(1.03) scaleX(0.98) rotate(0.4deg);
+    filter: brightness(1.05);
+  }
+}
+
+@keyframes flame-burst {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.4);
+  }
+  60% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@layer utilities {
+  .flame-burst {
+    animation: flame-burst 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+  }
+}
+
+@keyframes smoke-puff {
+  0% {
+    opacity: 0.8;
+    transform: scale(0.5) translateY(0);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.2) translateY(-12px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.8) translateY(-24px);
+  }
+}
+
+@keyframes confetti-burst {
+  0% {
+    opacity: 1;
+    transform: scale(0) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.4) rotate(180deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.8) rotate(360deg) translateY(-40px);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 16px oklch(0.65 0.19 70 / 0.6);
+  }
+  50% {
+    box-shadow: 0 0 32px oklch(0.65 0.19 70 / 0.9), 0 0 64px
+      oklch(0.65 0.19 70 / 0.4);
+  }
+}
+
+@keyframes float-up {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-60px) scale(0.6);
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-4px) rotate(-1deg);
+  }
+  40% {
+    transform: translateX(4px) rotate(1deg);
+  }
+  60% {
+    transform: translateX(-3px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
+}

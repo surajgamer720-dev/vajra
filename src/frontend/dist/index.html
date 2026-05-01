@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Vajra — Discipline Streak Tracker</title>
+    <meta name="description" content="Build unbreakable discipline. Track your daily habits with fire." />
+    <meta name="theme-color" content="#1a1040" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Vajra" />
+    <meta name="color-scheme" content="dark" />
+    <meta property="og:title" content="Vajra — Discipline Streak Tracker" />
+    <meta property="og:description" content="Build unbreakable discipline. Track your daily habits with fire." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Resource hints for fast loading -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+
+    <!-- Critical assets -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
+
+    <!-- Instant splash screen — pure CSS, no JS dependency -->
+    <style>
+      #splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: #1a1040;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+      }
+      #splash.hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      #splash-flame {
+        font-size: 56px;
+        animation: splashFlicker 0.8s ease-in-out infinite alternate;
+      }
+      #splash-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: oklch(0.92 0.04 279);
+        letter-spacing: 0.05em;
+        font-family: Georgia, serif;
+      }
+      #splash-sub {
+        font-size: 13px;
+        color: oklch(0.64 0.04 279);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      #splash-dots {
+        display: flex;
+        gap: 6px;
+        margin-top: 8px;
+      }
+      #splash-dots span {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: oklch(0.65 0.19 70);
+        animation: dotPulse 1.2s ease-in-out infinite;
+      }
+      #splash-dots span:nth-child(2) { animation-delay: 0.2s; }
+      #splash-dots span:nth-child(3) { animation-delay: 0.4s; }
+      @keyframes splashFlicker {
+        from { transform: scaleY(1) rotate(-1deg); filter: brightness(1); }
+        to   { transform: scaleY(1.06) rotate(1deg); filter: brightness(1.15); }
+      }
+      @keyframes dotPulse {
+        0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+        40% { opacity: 1; transform: scale(1); }
+      }
+      /* Prevent FOUC — body hidden until React mounts */
+      body { background: #1a1040; }
+    </style>
+    <script type="module" crossorigin src="/assets/index-BsEWAQwG.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-query-C_wYnWCR.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-router-BeIzse7m.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-motion-CHvZYZYX.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-ui-CkOicQ3_.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-DsBVmcM1.css">
+  </head>
+  <body>
+    <!-- Instant splash — shown before any JS loads -->
+    <div id="splash" role="status" aria-label="Loading Vajra">
+      <div id="splash-flame">🔥</div>
+      <div id="splash-title">Vajra</div>
+      <div id="splash-sub">Discipline Streak Tracker</div>
+      <div id="splash-dots">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+
+    <div id="root"></div>
+
+    <script>
+      // ── Service Worker Registration ───────────────────────────────────────
+      if ('serviceWorker' in navigator) {
+        // Register immediately (don't wait for load event for faster SW activation)
+        navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(registration => {
+          // Check for a waiting SW (update available)
+          if (registration.waiting) {
+            window.dispatchEvent(new CustomEvent('vajra:sw-waiting'));
+          }
+
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            if (!newWorker) return;
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                window.dispatchEvent(new CustomEvent('vajra:sw-waiting'));
+              }
+            });
+          });
+        }).catch(() => {/* SW unavailable, app still works */});
+
+        // When a new SW takes control, reload to pick up new assets
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!refreshing) {
+            refreshing = true;
+            window.location.reload();
+          }
+        });
+      }
+
+      // ── Hide splash once React app is painted ────────────────────────────
+      // React calls window.__hideSplash() from main.tsx after first render
+      window.__hideSplash = function() {
+        var el = document.getElementById('splash');
+        if (el) {
+          el.classList.add('hidden');
+          setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 350);
+        }
+      };
+
+      // Auto-hide splash when #root gets children (React mounted)
+      var rootEl = document.getElementById('root');
+      if (rootEl && window.MutationObserver) {
+        var observer = new MutationObserver(function() {
+          if (rootEl.children.length > 0) {
+            observer.disconnect();
+            // Small delay so first paint is complete
+            requestAnimationFrame(function() {
+              requestAnimationFrame(function() {
+                window.__hideSplash && window.__hideSplash();
+              });
+            });
+          }
+        });
+        observer.observe(rootEl, { childList: true });
+      }
+
+      // Fallback: auto-hide after 4s even if React fails to call it
+      setTimeout(function() { window.__hideSplash && window.__hideSplash(); }, 4000);
+    </script>
+  </body>
+</html>

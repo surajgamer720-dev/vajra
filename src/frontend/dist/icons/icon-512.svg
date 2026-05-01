@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#2d1b69"/>
+      <stop offset="100%" stop-color="#1a1040"/>
+    </radialGradient>
+    <radialGradient id="coreGrad" cx="50%" cy="80%" r="60%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
+      <stop offset="25%" stop-color="#ffe066"/>
+      <stop offset="60%" stop-color="#ff6a00"/>
+      <stop offset="100%" stop-color="#c0392b" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="midGrad" cx="50%" cy="75%" r="50%">
+      <stop offset="0%" stop-color="#ffcc02"/>
+      <stop offset="60%" stop-color="#ff5500"/>
+      <stop offset="100%" stop-color="#c0392b" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="outerGlow" cx="50%" cy="75%" r="50%">
+      <stop offset="0%" stop-color="#ff6a00" stop-opacity="0.65"/>
+      <stop offset="100%" stop-color="#ff6a00" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="blur1" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="10"/>
+    </filter>
+    <filter id="blur2" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="22"/>
+    </filter>
+    <filter id="blur3" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="5"/>
+    </filter>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="256" fill="url(#bgGrad)"/>
+
+  <!-- Outer glow -->
+  <ellipse cx="256" cy="310" rx="140" ry="118" fill="url(#outerGlow)" filter="url(#blur2)"/>
+
+  <!-- Main flame body -->
+  <path d="M256 96 C236 140 188 158 184 208 C180 248 200 282 218 298 C210 270 214 244 234 234 C222 266 226 298 256 318 C286 298 290 266 278 234 C298 244 302 270 294 298 C312 282 332 248 328 208 C324 158 276 140 256 96Z" fill="url(#coreGrad)"/>
+
+  <!-- Middle detail flame -->
+  <path d="M256 170 C244 196 222 210 220 238 C218 262 232 282 248 294 C242 276 244 256 256 248 C268 256 270 276 264 294 C280 282 294 262 292 238 C290 210 268 196 256 170Z" fill="url(#midGrad)"/>
+
+  <!-- Inner bright core -->
+  <path d="M256 190 C248 210 234 222 234 246 C234 268 244 284 256 292 C268 284 278 268 278 246 C278 222 264 210 256 190Z" fill="#fff9e6" opacity="0.75" filter="url(#blur3)"/>
+
+  <!-- Side flames -->
+  <path d="M198 220 C184 236 180 260 190 280 C200 264 200 244 212 234Z" fill="#ff8c00" opacity="0.7"/>
+  <path d="M314 220 C328 236 332 260 322 280 C312 264 312 244 300 234Z" fill="#ff8c00" opacity="0.7"/>
+
+  <!-- Tiny top flames -->
+  <path d="M232 148 C224 162 224 178 232 188 C238 176 236 160 244 152Z" fill="#ffb300" opacity="0.6"/>
+  <path d="M280 132 C290 148 288 166 278 176 C274 162 278 146 272 136Z" fill="#ffb300" opacity="0.6"/>
+
+  <!-- Sparkles -->
+  <circle cx="208" cy="156" r="6" fill="#ffe066" opacity="0.85"/>
+  <circle cx="304" cy="136" r="5" fill="#ff9500" opacity="0.75"/>
+  <circle cx="256" cy="112" r="4" fill="#ffffff" opacity="0.65"/>
+  <circle cx="180" cy="190" r="3.5" fill="#ffd700" opacity="0.55"/>
+  <circle cx="330" cy="178" r="3" fill="#ffd700" opacity="0.55"/>
+</svg>

@@ -1,0 +1,98 @@
+// Version: 1.0.0
+type Activity__913997561 =
+  {
+    createdAt : Timestamp__301639476;
+    emoji : Text;
+    id : Text;
+    isPredefined : Bool;
+    name : Text;
+    reminderTime : ?Text
+  };
+type BreakLog__294017006 =
+  {
+    activityId : Text;
+    breakDate : Text;
+    createdAt : Timestamp__301639476;
+    id : Text;
+    reason : Text;
+    streakLengthAtBreak : Nat;
+    wasManual : Bool
+  };
+type DailyCompletion__240057397 =
+  {activityId : Text; completedAt : Timestamp__301639476; date : Text};
+type Data__791452850<K, V> =
+  {var count : Nat__490723111; kvs : [var ?(K, V)]};
+type Internal__8484328<K, V> =
+  {children : [var ?Node__46230540<K, V>]; data : Data__791452850<K, V>};
+type Leaf__809889148<K, V> = {data : Data__791452850<K, V>};
+type List__415060402<T> = List__790383201<T>;
+type List__790383201<T> =
+  {
+    var blockIndex : Nat__490723111;
+    var blocks : [var [var ?T]];
+    var elementIndex : Nat__490723111
+  };
+type MilestoneUnlock__221592900 =
+  {activityId : Text; milestoneDay : Nat; unlockedAt : Timestamp__301639476};
+type Nat__490723111 = Nat__920180692;
+type Nat__920180692 = Nat;
+type Node__46230540<K, V> =
+  {#internal : Internal__8484328<K, V>; #leaf : Leaf__809889148<K, V>};
+type SavedQuote__787708860 = {quoteId : Text; savedAt : Timestamp__301639476};
+type Streak__877649186 =
+  {
+    activityId : Text;
+    var currentStreak : Nat;
+    var freezeActiveDate : ?Text;
+    var freezeTokensEarned : Nat;
+    var freezeTokensUsed : Nat;
+    var lastCompletedDate : ?Text;
+    var longestStreak : Nat;
+    var totalDaysCompleted : Nat
+  };
+type Timestamp__301639476 = Int;
+type UserProfile__129828592 =
+  {
+    createdAt : Timestamp__301639476;
+    var name : Text;
+    var onboardingComplete : Bool
+  };
+actor {
+  stable activities :
+    {
+      var blockIndex : Nat__490723111;
+      var blocks : [var [var ?Activity__913997561]];
+      var elementIndex : Nat__490723111
+    };
+  stable breakLogs :
+    {
+      var blockIndex : Nat__490723111;
+      var blocks : [var [var ?BreakLog__294017006]];
+      var elementIndex : Nat__490723111
+    };
+  stable completions :
+    {
+      var blockIndex : Nat__490723111;
+      var blocks : [var [var ?DailyCompletion__240057397]];
+      var elementIndex : Nat__490723111
+    };
+  stable var idCounter : Nat;
+  stable milestones :
+    {
+      var root :
+        Node__46230540<Text, List__415060402<MilestoneUnlock__221592900>>;
+      var size : Nat__490723111
+    };
+  stable profile : {var value : ?UserProfile__129828592};
+  stable savedQuotes :
+    {
+      var blockIndex : Nat__490723111;
+      var blocks : [var [var ?SavedQuote__787708860]];
+      var elementIndex : Nat__490723111
+    };
+  stable streaks :
+    {
+      var root : Node__46230540<Text, Streak__877649186>;
+      var size : Nat__490723111
+    }
+};

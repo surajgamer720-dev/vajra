@@ -1,0 +1,29 @@
+{
+  "overview": "Vajra is a discipline streak tracker with an honesty-first philosophy. Track daily habits like Brahmachariya, Meditation, and Exercise with a visually striking fire-glow streak system, milestone badge unlocks, and a motivational quotes engine. All data stays on your device — no account needed.",
+  "features": [
+    "Fire streak animations that grow with your consistency",
+    "Milestone badge system with full-screen unlock animations",
+    "100+ motivational quotes engine with favorites",
+    "Honest streak break log for self-reflection",
+    "Calendar heatmap and stats dashboard",
+    "Trophy Room for all earned badges",
+    "Streak Freeze Token to protect one missed day",
+    "Push notification reminders and streak-at-risk warnings",
+    "Quick Tap shortcut page for rapid activity completion",
+    "Custom activities with emoji and reminders",
+    "Onboarding flow with tutorial",
+    "Offline-first PWA — installable on any device"
+  ],
+  "category": "productivity",
+  "tags": [
+    "habit-tracker",
+    "streak",
+    "discipline",
+    "meditation",
+    "pwa",
+    "offline-first",
+    "gamification",
+    "self-improvement"
+  ],
+  "last_updated": "2026-04-29T10:09:00.013Z"
+}
