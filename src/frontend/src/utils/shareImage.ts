@@ -245,7 +245,7 @@ export async function createShareImage(
   ctx.font = `${size * 0.022}px "General Sans", sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "bottom";
-  ctx.fillText("Built with caffeine.ai", size / 2, size - 48);
+  ctx.fillText("Built with Suraj", size / 2, size - 48);
   ctx.restore();
 
   return new Promise<Blob>((resolve, reject) => {

@@ -791,15 +791,7 @@ export default function SettingsPage() {
 
       {/* ── Branding footer ────────────────────────────────────────────────── */}
       <p className="text-center text-xs text-muted-foreground py-2">
-        © {new Date().getFullYear()}. Built with love using{" "}
-        <a
-          href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(typeof window !== "undefined" ? window.location.hostname : "")}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-primary hover:underline"
-        >
-          caffeine.ai
-        </a>
+        © {new Date().getFullYear()}. Built with Suraj
       </p>
     </div>
   );

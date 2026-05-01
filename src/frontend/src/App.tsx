@@ -12,6 +12,8 @@ import { Skeleton } from "./components/ui/skeleton";
 import { QUOTES } from "./data/quotes";
 import { restoreNotificationSchedules } from "./services/notifications";
 import { useVajraStore } from "./store/vajraStore";
+import { useRegisterSW } from "virtual:pwa-register";
+import { useState, useCallback } from "react";
 
 // ─── Apply persisted appearance settings before first paint ──────────────────
 (function applyPersistedAppearance() {
@@ -192,11 +194,81 @@ declare module "@tanstack/react-router" {
   }
 }
 
+function UpdateNotification() {
+  const [showReload, setShowReload] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [offlineReady, setOfflineReady] = useState(false);
+
+  const onSWEvent = useCallback((event: any) => {
+    if (event.type === "NEED_REFRESH") {
+      setShowReload(true);
+    } else if (event.type === "OFFLINE_READY") {
+      setOfflineReady(true);
+      setTimeout(() => setOfflineReady(false), 3000);
+    }
+  }, []);
+
+  const { updateServiceWorker } = useRegisterSW({
+    onRegisterError: (error: any) => console.error("SW registration error:", error),
+    onSWEvent,
+  });
+
+  const handleUpdate = () => {
+    setDownloading(true);
+    let prog = 0;
+    const interval = setInterval(() => {
+      prog += 20;
+      setProgress(prog);
+      if (prog >= 100) {
+        clearInterval(interval);
+        updateServiceWorker(true);
+      }
+    }, 1000);
+  };
+
+  if (offlineReady) {
+    return (
+      <div className="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50">
+        App ready for offline use!
+      </div>
+    );
+  }
+
+  if (!showReload) return null;
+
+  return (
+    <div className="fixed bottom-4 right-4 bg-blue-600 text-white p-4 rounded-lg shadow-lg z-50 min-w-[300px]">
+      <div className="font-bold mb-2">New version available!</div>
+      {downloading ? (
+        <div className="space-y-2">
+          <div className="text-sm">Downloading update...</div>
+          <div className="w-full bg-blue-800 rounded-full h-2.5">
+            <div
+              className="bg-white h-2.5 rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <div className="text-xs text-blue-200">{progress}%</div>
+        </div>
+      ) : (
+        <button
+          onClick={handleUpdate}
+          className="bg-white text-blue-600 px-4 py-1 rounded font-semibold hover:bg-blue-50"
+        >
+          Download Update
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <>
       <AppInit />
       <RouterProvider router={router} />
+      <UpdateNotification />
     </>
   );
 }
