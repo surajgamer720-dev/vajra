@@ -1,0 +1,16 @@
+name = "vajra-frontend"
+type = "javascript"
+
+# The build command to run
+[build]
+command = "pnpm install && pnpm build"
+
+# The directory to upload (Vite's default output directory)
+[build.upload]
+dir = "dist"
+main = "dist/index.html"
+
+# Environment variables (update these with your actual values)
+[vars]
+II_URL = "https://identity.internetcomputer.org/"
+STORAGE_GATEWAY_URL = "https://blob.caffeine.ai"

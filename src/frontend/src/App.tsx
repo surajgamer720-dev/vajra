@@ -12,7 +12,7 @@ import { Skeleton } from "./components/ui/skeleton";
 import { QUOTES } from "./data/quotes";
 import { restoreNotificationSchedules } from "./services/notifications";
 import { useVajraStore } from "./store/vajraStore";
-import { useRegisterSW } from "virtual:pwa-register";
+import { useRegisterSW } from "virtual:pwa-register/react";
 import { useState, useCallback } from "react";
 
 // ─── Apply persisted appearance settings before first paint ──────────────────

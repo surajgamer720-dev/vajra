@@ -2,6 +2,7 @@ import { fileURLToPath, URL } from "url";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import environment from "vite-plugin-environment";
+import { VitePWA } from "vite-plugin-pwa";
 
 const ii_url =
   process.env.DFX_NETWORK === "local"
@@ -71,6 +72,42 @@ export default defineConfig({
     environment(["II_URL"]),
     environment(["STORAGE_GATEWAY_URL"]),
     react(),
+    VitePWA({
+      registerType: "autoUpdate",
+      includeAssets: ["favicon.ico", "icon-192x192.png", "icon-512x512.png"],
+      manifest: {
+        name: "Vajra - Activity Tracker",
+        short_name: "Vajra",
+        description: "Track your activities, build streaks, achieve goals",
+        theme_color: "#000000",
+        background_color: "#000000",
+        display: "standalone",
+        orientation: "portrait",
+        scope: "/",
+        start_url: "/",
+        icons: [
+          {
+            src: "/icon-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
+          },
+          {
+            src: "/icon-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+          },
+          {
+            src: "/icon-maskable-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
+          },
+        ],
+      },
+      devOptions: {
+        enabled: true,
+      },
+    }),
   ],
   resolve: {
     alias: [
