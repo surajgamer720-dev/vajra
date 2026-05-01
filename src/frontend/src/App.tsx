@@ -264,8 +264,26 @@ function UpdateNotification() {
 }
 
 export default function App() {
+  const [updateComplete, setUpdateComplete] = useState(false);
+
+  useEffect(() => {
+    const handleComplete = () => {
+      setUpdateComplete(true);
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    };
+    window.addEventListener("vajra:update-complete", handleComplete);
+    return () => window.removeEventListener("vajra:update-complete", handleComplete);
+  }, []);
+
   return (
     <>
+      {updateComplete && (
+        <div className="fixed top-14 left-0 right-0 z-50 bg-emerald-500 text-white text-center py-2 text-sm font-semibold">
+          ✅ App Updated Successfully!
+        </div>
+      )}
       <AppInit />
       <RouterProvider router={router} />
       <UpdateNotification />

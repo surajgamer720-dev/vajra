@@ -2,11 +2,15 @@ import { useCallback, useEffect, useState } from "react";
 
 interface UsePWAUpdate {
   updateAvailable: boolean;
+  isUpdating: boolean;
+  updateProgress: number;
   handleUpdate: () => void;
 }
 
 export function usePWAUpdate(): UsePWAUpdate {
   const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [updateProgress, setUpdateProgress] = useState(0);
   const [waitingSW, setWaitingSW] = useState<ServiceWorker | null>(null);
 
   useEffect(() => {
@@ -30,6 +34,17 @@ export function usePWAUpdate(): UsePWAUpdate {
       });
     };
     window.addEventListener("vajra:sw-waiting", customHandler);
+
+    // Listen for update complete
+    const updateCompleteHandler = () => {
+      setIsUpdating(false);
+      setUpdateProgress(100);
+      // Reload after a short delay to show 100%
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    };
+    window.addEventListener("vajra:update-complete", updateCompleteHandler);
 
     // Check for a waiting SW on load
     navigator.serviceWorker.getRegistration().then((registration) => {
@@ -58,17 +73,37 @@ export function usePWAUpdate(): UsePWAUpdate {
     return () => {
       navigator.serviceWorker.removeEventListener("message", messageHandler);
       window.removeEventListener("vajra:sw-waiting", customHandler);
+      window.removeEventListener("vajra:update-complete", updateCompleteHandler);
     };
   }, []);
 
   const handleUpdate = useCallback(() => {
     if (waitingSW) {
+      setIsUpdating(true);
+      // Simulate 5-second progress animation
+      const interval = setInterval(() => {
+        setUpdateProgress((prev) => {
+          if (prev >= 100) {
+            clearInterval(interval);
+            return 100;
+          }
+          return prev + 20; // 20% every second = 5 seconds
+        });
+      }, 1000);
+      
+      // Send skip waiting message
       waitingSW.postMessage({ type: "SKIP_WAITING" });
+      
+      // Fallback: reload after 5 seconds if SW doesn't trigger reload
+      setTimeout(() => {
+        clearInterval(interval);
+        window.location.reload();
+      }, 5000);
     } else {
       // Fallback: reload
       window.location.reload();
     }
   }, [waitingSW]);
 
-  return { updateAvailable, handleUpdate };
+  return { updateAvailable, isUpdating, updateProgress, handleUpdate };
 }
