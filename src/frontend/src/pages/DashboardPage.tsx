@@ -575,11 +575,6 @@ export default function DashboardPage() {
     ? (streaks[breakDialogId]?.currentStreak ?? 0)
     : 0;
 
-  const breakActivity = activities.find((a) => a.id === breakDialogId);
-  const breakStreakLength = breakDialogId
-    ? (streaks[breakDialogId]?.currentStreak ?? 0)
-    : 0;
-
   const now = new Date();
   const dateLabel = now.toLocaleDateString("en-US", {
     weekday: "long",
