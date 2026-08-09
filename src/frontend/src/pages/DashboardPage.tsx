@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { MoreVertical, Plus, Settings, Snowflake, Zap } from "lucide-react";
+import { Plus, Settings, Snowflake, Zap } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -8,12 +8,6 @@ import { FlameIcon } from "../components/FlameIcon";
 import { MilestoneOverlay } from "../components/MilestoneOverlay";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../components/ui/dropdown-menu";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import {
@@ -180,7 +174,6 @@ interface ActivityCardProps {
   currentStreak: number;
   index: number;
   onComplete: (id: string) => void;
-  onBreak: (id: string) => void;
   completedToday: boolean;
   isAnimating: boolean;
   hasFreezeToken: boolean;
@@ -193,7 +186,6 @@ function ActivityCard({
   currentStreak,
   index,
   onComplete,
-  onBreak,
   completedToday,
   isAnimating,
   hasFreezeToken,
@@ -201,17 +193,6 @@ function ActivityCard({
   onApplyFreeze,
 }: ActivityCardProps) {
   const flameLevel = getFlameLevel(currentStreak);
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  function handlePointerDown() {
-    longPressTimer.current = setTimeout(() => {
-      onBreak(activity.id);
-    }, 500);
-  }
-
-  function handlePointerUp() {
-    if (longPressTimer.current) clearTimeout(longPressTimer.current);
-  }
 
   const confettiDots = isAnimating ? makeConfetti(8) : [];
 
@@ -253,9 +234,6 @@ function ActivityCard({
       <div className="flex items-center gap-4">
         {/* Flame */}
         <div
-          onPointerDown={handlePointerDown}
-          onPointerUp={handlePointerUp}
-          onPointerLeave={handlePointerUp}
           className="flex-shrink-0 cursor-pointer"
         >
           <motion.div
@@ -339,28 +317,6 @@ function ActivityCard({
             {completedToday ? "✓" : "○"}
           </motion.button>
 
-          {/* Three-dot menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                data-ocid={`dashboard.activity_menu.${index + 1}`}
-                className="w-7 h-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-smooth"
-                aria-label="Activity options"
-              >
-                <MoreVertical size={15} />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-card border-border">
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
-                onSelect={() => onBreak(activity.id)}
-                data-ocid={`dashboard.break_streak_menu_item.${index + 1}`}
-              >
-                Break Streak
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
     </motion.div>
@@ -619,6 +575,11 @@ export default function DashboardPage() {
     ? (streaks[breakDialogId]?.currentStreak ?? 0)
     : 0;
 
+  const breakActivity = activities.find((a) => a.id === breakDialogId);
+  const breakStreakLength = breakDialogId
+    ? (streaks[breakDialogId]?.currentStreak ?? 0)
+    : 0;
+
   const now = new Date();
   const dateLabel = now.toLocaleDateString("en-US", {
     weekday: "long",
@@ -674,7 +635,6 @@ export default function DashboardPage() {
                   currentStreak={currentStreak}
                   index={i}
                   onComplete={handleComplete}
-                  onBreak={setBreakDialogId}
                   completedToday={completedToday}
                   isAnimating={animatingId === activity.id}
                   hasFreezeToken={hasFreezeToken}
@@ -704,15 +664,6 @@ export default function DashboardPage() {
           <Plus size={24} />
         </button>
       </motion.div>
-
-      {/* Break Reason Dialog */}
-      <BreakReasonDialog
-        open={!!breakDialogId}
-        activityName={breakActivity?.name ?? ""}
-        streakLength={breakStreakLength}
-        onConfirm={handleBreakConfirm}
-        onCancel={() => setBreakDialogId(null)}
-      />
 
       {/* Add Activity Sheet */}
       <AddActivitySheet

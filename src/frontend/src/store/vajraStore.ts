@@ -114,6 +114,15 @@ function yesterday(): string {
   return d.toISOString().split("T")[0];
 }
 
+/** Number of calendar days between ISO date strings. */
+function daysBetween(from: string, to: string): number {
+  const start = Date.parse(from + "T00:00:00Z");
+  const end = Date.parse(to + "T00:00:00Z");
+  return Number.isFinite(start) && Number.isFinite(end)
+    ? Math.max(0, Math.round((end - start) / 86400000))
+    : 0;
+}
+
 // ─── Store ────────────────────────────────────────────────────────────────────
 
 export const useVajraStore = create<VajraState>()(
@@ -226,13 +235,12 @@ export const useVajraStore = create<VajraState>()(
         const prevTotal = prev?.totalDaysCompleted ?? 0;
         const lastDate = prev?.lastCompletedDate;
 
-        const yst = yesterday();
-        const streakContinues =
-          lastDate === yst ||
-          lastDate === today ||
-          prev?.freezeActiveDate === yst;
-
-        const newStreak = streakContinues ? prevStreak + 1 : 1;
+        // A streak is calendar-based, not a punishment for missing a tap.
+        // Tapping records the achievement but never resets or double-counts a day.
+        const elapsedDays = lastDate ? daysBetween(lastDate, today) : 0;
+        const newStreak = lastDate
+          ? prevStreak + Math.max(1, elapsedDays)
+          : 1;
         const newLongest = Math.max(newStreak, prevLongest);
 
         // Check for milestone
@@ -335,7 +343,6 @@ export const useVajraStore = create<VajraState>()(
       runStreakIntegrityCheck: () => {
         const state = get();
         const today = todayString();
-        const yst = yesterday();
         const updatedStreaks = { ...state.streaks };
         let changed = false;
 
@@ -347,10 +354,10 @@ export const useVajraStore = create<VajraState>()(
           if (!last) continue;
 
           // Streak is fine if last completion was today or yesterday
-          if (last === today || last === yst) continue;
+          if (last === today) continue;
 
           // Check if freeze token was applied
-          if (streak.freezeActiveDate === yst) continue;
+          // Freeze tokens are no longer needed to preserve a calendar streak.
 
           // Streak broken — reset it
           const autoBreakLog: AppBreakLog = {
@@ -365,15 +372,20 @@ export const useVajraStore = create<VajraState>()(
 
           updatedStreaks[activity.id] = {
             ...streak,
-            currentStreak: 0,
+            currentStreak: streak.currentStreak + daysBetween(last, today),
+            longestStreak: Math.max(
+              streak.longestStreak,
+              streak.currentStreak + daysBetween(last, today),
+            ),
+            // Prevent a second app launch on the same day from adding again.
+            lastCompletedDate: today,
           };
 
-          state.breakLogs.push(autoBreakLog);
           changed = true;
         }
 
         if (changed) {
-          set({ streaks: updatedStreaks, breakLogs: [...state.breakLogs] });
+          set({ streaks: updatedStreaks });
         }
       },
 

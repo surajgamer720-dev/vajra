@@ -146,3 +146,28 @@ self.addEventListener('notificationclick', event => {
     }),
   );
 });
+
+// Web Push is delivered even when the PWA is closed. The backend sends a small
+// JSON payload; defaults make notifications safe if a provider sends no data.
+self.addEventListener('push', event => {
+  const fallback = {
+    title: 'Vajra',
+    body: 'You have a new reminder.',
+    icon: '/icons/icon-192.svg',
+    url: '/',
+  };
+  let data = fallback;
+  try {
+    data = { ...fallback, ...event.data.json() };
+  } catch {
+    if (event.data) data.body = event.data.text();
+  }
+
+  event.waitUntil(self.registration.showNotification(data.title, {
+    body: data.body,
+    icon: data.icon,
+    badge: '/icons/icon-192.svg',
+    tag: 'vajra-push',
+    data: { url: data.url },
+  }));
+});

@@ -12,6 +12,7 @@ import { Skeleton } from "./components/ui/skeleton";
 import { QUOTES } from "./data/quotes";
 import { restoreNotificationSchedules } from "./services/notifications";
 import { useVajraStore } from "./store/vajraStore";
+import { todayString } from "./types/index";
 import { useRegisterSW } from "virtual:pwa-register/react";
 import { useState, useCallback } from "react";
 
@@ -80,7 +81,8 @@ function AppInit() {
 
     // 3. Restore notification schedules if permission granted
     if (
-      store.notificationPermission === "granted" &&
+      "Notification" in window &&
+      Notification.permission === "granted" &&
       store.activities.length > 0
     ) {
       try {
@@ -94,6 +96,21 @@ function AppInit() {
       }
     }
   }, []); // Run once on mount
+
+  useEffect(() => {
+    if (!("setAppBadge" in navigator)) return;
+    const updateBadge = () => {
+      const state = useVajraStore.getState();
+      const done = new Set(state.completions[todayString()] ?? []);
+      const remaining = state.activities.filter(
+        (activity) => !done.has(activity.id),
+      ).length;
+      if (remaining > 0) navigator.setAppBadge(remaining);
+      else navigator.clearAppBadge();
+    };
+    updateBadge();
+    return useVajraStore.subscribe(updateBadge);
+  }, []);
 
   return null;
 }

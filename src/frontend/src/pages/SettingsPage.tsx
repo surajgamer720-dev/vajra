@@ -45,6 +45,10 @@ import {
   scheduleMorningQuote,
   sendMorningQuote,
 } from "../services/notifications";
+import {
+  enablePushNotifications,
+  isPushSupported,
+} from "../services/pushNotifications";
 import { useVajraStore } from "../store/vajraStore";
 import type { AppActivity } from "../types/index";
 
@@ -175,6 +179,7 @@ export default function SettingsPage() {
   // Profile editing
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
+  const [pushEnabling, setPushEnabling] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
 
   // Text size from settings
@@ -237,6 +242,23 @@ export default function SettingsPage() {
       restoreNotificationSchedules(activities, notifSettings, QUOTES);
     } else if (perm === "denied") {
       toast.error("Notifications blocked. Enable in browser settings.");
+    }
+  }
+
+  async function handleEnablePush() {
+    if (!isPushSupported()) {
+      toast.error("Push notifications are not supported by this browser.");
+      return;
+    }
+    setPushEnabling(true);
+    try {
+      await enablePushNotifications();
+      setNotificationPermission("granted");
+      toast.success("Push notifications are enabled on this device.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not enable push notifications.");
+    } finally {
+      setPushEnabling(false);
     }
   }
 
@@ -461,6 +483,28 @@ export default function SettingsPage() {
           </div>
         )}
 
+        <SettingRow>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-foreground">
+              Background Push Notifications
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Receive reminders even when Vajra is closed
+            </p>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={handleEnablePush}
+            disabled={pushEnabling || notificationPermission === "denied"}
+            data-ocid="settings.enable_push_button"
+            className="text-xs h-7 px-2"
+          >
+            {pushEnabling ? "Enabling..." : "Enable push"}
+          </Button>
+        </SettingRow>
+
         {/* Sub-options when granted */}
         {notificationPermission === "granted" && (
           <>
@@ -498,7 +542,7 @@ export default function SettingsPage() {
             <SettingRow className="bg-muted/10">
               <div className="min-w-0">
                 <p className="text-sm font-medium text-foreground">
-                  Streak at Risk Warning
+                  Evening Reminder
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Alert 1 hour before midnight

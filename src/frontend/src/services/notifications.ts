@@ -62,15 +62,27 @@ function notify(
   if (!("Notification" in window) || Notification.permission !== "granted")
     return;
 
-  // Try SW notification first (works in background)
-  if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
-    navigator.serviceWorker.controller.postMessage({
-      type: "SHOW_NOTIFICATION",
-      title,
-      body,
-      icon,
-      tag: tag ?? "vajra-notification",
-    });
+  // Use the active registration directly. This works with both the generated
+  // Workbox worker and the fallback worker, unlike posting a custom message.
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.ready
+      .then((registration) =>
+        registration.showNotification(title, {
+          body,
+          icon,
+          badge: "/icons/icon-192.svg",
+          tag: tag ?? "vajra-notification",
+          silent: false,
+        }),
+      )
+      .catch(() => {
+        // A direct notification below is still useful if registration fails.
+        try {
+          new Notification(title, { body, icon, tag, silent: false });
+        } catch {
+          // Notifications may be blocked by the operating system.
+        }
+      });
   } else {
     // Fallback to direct Notification API
     try {
@@ -169,8 +181,8 @@ export function scheduleStreakWarning(
 
   const timer = setTimeout(() => {
     notify(
-      `⚠️ Streak at Risk: ${activityName}`,
-      "One hour left to complete your activity and protect your streak!",
+      `Daily reminder: ${activityName}`,
+      "A small check-in is waiting whenever you are ready.",
       undefined,
       `streak-warn-${activityId}`,
     );

@@ -74,33 +74,66 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.ico", "icon-192x192.png", "icon-512x512.png"],
+      includeAssets: [
+        "favicon.ico",
+        "logo.png",
+        "icons/icon-192.svg",
+        "icons/icon-512.svg",
+      ],
       manifest: {
         name: "Vajra - Activity Tracker",
         short_name: "Vajra",
         description: "Track your activities, build streaks, achieve goals",
-        theme_color: "#000000",
-        background_color: "#000000",
+        theme_color: "#1a1040",
+        background_color: "#1a1040",
         display: "standalone",
         orientation: "portrait",
         scope: "/",
         start_url: "/",
         icons: [
           {
-            src: "/icon-192x192.png",
+            src: "/icons/icon-192.svg",
             sizes: "192x192",
-            type: "image/png",
+            type: "image/svg+xml",
           },
           {
-            src: "/icon-512x512.png",
+            src: "/icons/icon-512.svg",
             sizes: "512x512",
-            type: "image/png",
+            type: "image/svg+xml",
           },
           {
-            src: "/icon-maskable-512x512.png",
+            src: "/icons/icon-512.svg",
             sizes: "512x512",
-            type: "image/png",
+            type: "image/svg+xml",
             purpose: "maskable",
+          },
+        ],
+        shortcuts: [
+          {
+            name: "Quick Tap",
+            short_name: "Tap",
+            description: "Mark an activity done",
+            url: "/quick-tap",
+            icons: [
+              {
+                src: "/icons/icon-192.svg",
+                sizes: "192x192",
+                type: "image/svg+xml",
+              },
+            ],
+          },
+          {
+            name: "My Streaks",
+            short_name: "Streaks",
+            description: "Open your streak dashboard",
+            url: "/",
+            icons: [
+              {
+                src: "/icons/icon-192.svg",
+                sizes: "192x192",
+                type: "image/svg+xml",
+              },
+            ],
           },
         ],
       },

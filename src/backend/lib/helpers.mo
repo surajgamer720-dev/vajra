@@ -26,6 +26,16 @@ module {
     else { #future };
   };
 
+  // Calendar distance for streaks that continue through missed check-ins.
+  public func daysBetween(prev : Text, curr : Text) : Nat {
+    let prevParts = prev.split(#char '-').toArray();
+    let currParts = curr.split(#char '-').toArray();
+    if (prevParts.size() != 3 or currParts.size() != 3) { return 0 };
+    let prevDays = dateToDays(prevParts[0], prevParts[1], prevParts[2]);
+    let currDays = dateToDays(currParts[0], currParts[1], currParts[2]);
+    if (currDays > prevDays) { currDays - prevDays } else { 0 };
+  };
+
   func natFromText(t : Text) : Nat {
     switch (Nat.fromText(t)) { case (?n) n; case null 0 };
   };

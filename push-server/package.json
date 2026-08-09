@@ -1,0 +1,16 @@
+{
+  "name": "vajra-push-server",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "dev": "node --watch server.cjs",
+    "start": "node server.cjs",
+    "generate:vapid": "node generate-vapid.cjs"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "web-push": "^3.6.7"
+  }
+}
