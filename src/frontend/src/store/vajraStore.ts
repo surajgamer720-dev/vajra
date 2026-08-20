@@ -85,6 +85,7 @@ export interface VajraState {
   breakStreakLocally: (activityId: string, reason: string) => void;
   runStreakIntegrityCheck: () => void;
   applyFreezeToken: (activityId: string) => boolean;
+  unfreezeStreakLocally: (activityId: string) => boolean;
   /** Used when syncing from backend on first load */
   setStreaks: (streaks: Record<string, AppStreakInfo>) => void;
   setMilestones: (milestones: Record<string, AppMilestoneUnlock[]>) => void;
@@ -223,7 +224,7 @@ export const useVajraStore = create<VajraState>()(
         const prevLongest = prev?.longestStreak ?? 0;
         const prevTotal = prev?.totalDaysCompleted ?? 0;
         const lastDate = prev?.lastCompletedDate;
-        const hasActiveFreeze = prev?.freezeActiveDate != null;
+        const hasActiveFreeze = Boolean(prev?.freezeActiveDate);
 
         let newStreak = 1;
         if (lastDate) {
@@ -234,8 +235,8 @@ export const useVajraStore = create<VajraState>()(
           } else if (diff === 1) {
             // Consecutive day (yesterday -> today): exactly +1 streak!
             newStreak = prevStreak + 1;
-          } else if (diff === 2 && hasActiveFreeze) {
-            // Missed 1 day (gap of 2), but freeze token protected it: +1 streak!
+          } else if (hasActiveFreeze) {
+            // Missed day(s) while frozen due to work/life: streak was protected, resume +1!
             newStreak = prevStreak + 1;
           } else {
             // Missed 1 or more days without freeze: streak resets to 1 on this completion
@@ -293,7 +294,7 @@ export const useVajraStore = create<VajraState>()(
           freezeTokensEarned: (prev?.freezeTokensEarned ?? 0) + tokensToEarn,
           freezeTokensUsed: prev?.freezeTokensUsed ?? 0,
           lastCompletedDate: today,
-          freezeActiveDate: undefined, // consume active freeze
+          freezeActiveDate: undefined, // consume active freeze upon completion
         };
 
         set({
@@ -356,17 +357,27 @@ export const useVajraStore = create<VajraState>()(
         const updatedStreaks = { ...state.streaks };
         let updatedMilestones = { ...state.milestones };
         let updatedBreakLogs = [...state.breakLogs];
+        let updatedFreezeTokens = { ...state.freezeTokens };
         let changed = false;
+
+        const FREEZE_TOKEN_MILESTONES = [7, 30, 100, 365];
 
         for (const activity of state.activities) {
           const streak = updatedStreaks[activity.id];
           if (!streak) continue;
 
-          // 1. Backfill / heal any milestone that was achieved by current or longest streak
+          // 1. Backfill / heal any milestone achieved by currentStreak, longestStreak, totalDays, or completions history
+          const activityCompletionsCount = Object.values(state.completions).filter(
+            (ids) => ids.includes(activity.id),
+          ).length;
+
           const highestAchieved = Math.max(
             streak.currentStreak ?? 0,
             streak.longestStreak ?? 0,
+            streak.totalDaysCompleted ?? 0,
+            activityCompletionsCount,
           );
+
           const actMs = updatedMilestones[activity.id] ?? [];
           const unlockedSet = new Set(actMs.map((m) => m.milestoneDay));
           const missingMilestones = MILESTONE_DAYS.filter(
@@ -383,6 +394,24 @@ export const useVajraStore = create<VajraState>()(
             changed = true;
           }
 
+          // Backfill freeze tokens for achieved milestones if not yet earned
+          const totalEarnedTokens = MILESTONE_DAYS.filter(
+            (d) => FREEZE_TOKEN_MILESTONES.includes(d) && d <= highestAchieved,
+          ).length;
+
+          const currentTokensEarned = streak.freezeTokensEarned ?? 0;
+          if (currentTokensEarned < totalEarnedTokens) {
+            const missingTokens = totalEarnedTokens - currentTokensEarned;
+            updatedStreaks[activity.id] = {
+              ...streak,
+              freezeTokensEarned: totalEarnedTokens,
+              longestStreak: Math.max(streak.longestStreak ?? 0, highestAchieved),
+            };
+            updatedFreezeTokens[activity.id] =
+              (updatedFreezeTokens[activity.id] ?? 0) + missingTokens;
+            changed = true;
+          }
+
           // 2. Check if active streak has lapsed due to missed days
           if (streak.currentStreak > 0 && streak.lastCompletedDate) {
             const last = streak.lastCompletedDate;
@@ -392,14 +421,14 @@ export const useVajraStore = create<VajraState>()(
               continue;
             }
 
+            // If streak is frozen: DO NOT BREAK THE STREAK. It stays safely paused.
+            if (streak.freezeActiveDate) {
+              continue;
+            }
+
             const diff = daysBetween(last, today);
             if (diff > 1) {
-              // If exactly 1 day was missed and freeze was active, keep it protected
-              if (diff === 2 && streak.freezeActiveDate) {
-                continue;
-              }
-
-              // Otherwise streak broken — record auto-break and reset currentStreak to 0
+              // Missed days without freeze — record auto-break and reset currentStreak to 0
               const autoBreakLog: AppBreakLog = {
                 id: `auto-break-${Date.now()}-${activity.id}`,
                 activityId: activity.id,
@@ -426,6 +455,7 @@ export const useVajraStore = create<VajraState>()(
             streaks: updatedStreaks,
             milestones: updatedMilestones,
             breakLogs: updatedBreakLogs,
+            freezeTokens: updatedFreezeTokens,
           });
         }
       },
@@ -447,7 +477,34 @@ export const useVajraStore = create<VajraState>()(
           },
           streaks: {
             ...state.streaks,
-            [activityId]: { ...streak, freezeActiveDate: today },
+            [activityId]: {
+              ...streak,
+              freezeActiveDate: today,
+              freezeTokensUsed: (streak.freezeTokensUsed ?? 0) + 1,
+            },
+          },
+        });
+        return true;
+      },
+
+      // ── Unfreeze streak manually ──────────────────────────────────────────
+      unfreezeStreakLocally: (activityId) => {
+        const state = get();
+        const streak = state.streaks[activityId];
+        if (!streak || !streak.freezeActiveDate) return false;
+
+        set({
+          freezeTokens: {
+            ...state.freezeTokens,
+            [activityId]: (state.freezeTokens[activityId] ?? 0) + 1,
+          },
+          streaks: {
+            ...state.streaks,
+            [activityId]: {
+              ...streak,
+              freezeActiveDate: undefined,
+              freezeTokensUsed: Math.max(0, (streak.freezeTokensUsed ?? 1) - 1),
+            },
           },
         });
         return true;

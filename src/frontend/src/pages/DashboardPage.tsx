@@ -178,6 +178,7 @@ interface ActivityCardProps {
   hasFreezeToken: boolean;
   freezeActive: boolean;
   onApplyFreeze: (id: string) => void;
+  onUnfreeze?: (id: string) => void;
 }
 
 function ActivityCard({
@@ -190,6 +191,7 @@ function ActivityCard({
   hasFreezeToken,
   freezeActive,
   onApplyFreeze,
+  onUnfreeze,
 }: ActivityCardProps) {
   const flameLevel = getFlameLevel(currentStreak);
 
@@ -254,9 +256,15 @@ function ActivityCard({
               {activity.emoji} {activity.name}
             </span>
             {freezeActive && (
-              <Badge className="text-xs bg-[oklch(0.55_0.18_220/0.2)] text-[oklch(0.72_0.18_220)] border-[oklch(0.55_0.18_220/0.4)]">
-                ❄️ Protected
-              </Badge>
+              <button
+                type="button"
+                onClick={() => onUnfreeze?.(activity.id)}
+                title="Streak is frozen & protected. Tap to unfreeze."
+                className="inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-[oklch(0.55_0.18_220/0.2)] text-[oklch(0.72_0.18_220)] border border-[oklch(0.55_0.18_220/0.4)] hover:bg-[oklch(0.55_0.18_220/0.3)] transition-smooth cursor-pointer"
+              >
+                <span>❄️ Protected</span>
+                <span className="text-[10px] opacity-70 hover:opacity-100">(Unfreeze)</span>
+              </button>
             )}
           </div>
 
@@ -493,6 +501,7 @@ export default function DashboardPage() {
     (s) => s.completeActivityLocally,
   );
   const applyFreezeToken = useVajraStore((s) => s.applyFreezeToken);
+  const unfreezeStreakLocally = useVajraStore((s) => s.unfreezeStreakLocally);
 
   const [animatingId, setAnimatingId] = useState<string | null>(null);
   const [quoteOverlay, setQuoteOverlay] = useState<QuoteOverlay | null>(null);
@@ -544,18 +553,26 @@ export default function DashboardPage() {
     [completeActivityLocally, settings.soundEnabled, savedQuoteIds],
   );
 
-
-
   const handleApplyFreeze = useCallback(
     (activityId: string) => {
       const success = applyFreezeToken(activityId);
       if (success) {
-        toast.success("Freeze token applied! Streak protected.");
+        toast.success("❄️ Streak frozen! Your streak is safely protected.");
       } else {
         toast.error("No freeze tokens available.");
       }
     },
     [applyFreezeToken],
+  );
+
+  const handleUnfreeze = useCallback(
+    (activityId: string) => {
+      const success = unfreezeStreakLocally(activityId);
+      if (success) {
+        toast.success("Streak unfrozen. Freeze token refunded.");
+      }
+    },
+    [unfreezeStreakLocally],
   );
 
   const now = new Date();
@@ -604,7 +621,7 @@ export default function DashboardPage() {
               const currentStreak = streak?.currentStreak ?? 0;
               const completedToday = todayCompletions.includes(activity.id);
               const hasFreezeToken = (freezeTokens[activity.id] ?? 0) > 0;
-              const freezeActive = streak?.freezeActiveDate === today;
+              const freezeActive = Boolean(streak?.freezeActiveDate);
 
               return (
                 <ActivityCard
@@ -618,6 +635,7 @@ export default function DashboardPage() {
                   hasFreezeToken={hasFreezeToken}
                   freezeActive={freezeActive}
                   onApplyFreeze={handleApplyFreeze}
+                  onUnfreeze={handleUnfreeze}
                 />
               );
             })}

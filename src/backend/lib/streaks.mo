@@ -50,14 +50,17 @@ module {
           case (#same) { streak.currentStreak };
           case (#consecutive) { streak.currentStreak + 1 };
           case (#gapOne) {
-            // Gap of exactly 1 missed day — check if freeze covers it
+            // Gap of missed day — check if freeze covers it
             switch (streak.freezeActiveDate) {
               case (?_) { streak.currentStreak + 1 };
               case null { 1 };
             };
           };
           case (#gapMany) {
-            1
+            switch (streak.freezeActiveDate) {
+              case (?_) { streak.currentStreak + 1 };
+              case null { 1 };
+            };
           };
           case (#future) { streak.currentStreak };
         };
