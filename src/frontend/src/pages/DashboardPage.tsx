@@ -3,7 +3,7 @@ import { Plus, Settings, Snowflake, Zap } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { BreakReasonDialog } from "../components/BreakReasonDialog";
+
 import { FlameIcon } from "../components/FlameIcon";
 import { MilestoneOverlay } from "../components/MilestoneOverlay";
 import { Badge } from "../components/ui/badge";
@@ -19,7 +19,6 @@ import {
 import { getQuoteForToday } from "../data/quotes";
 import { scheduleActivityReminder } from "../services/notifications";
 import {
-  playBreakSound,
   playCompletionSound,
   playMilestoneSound,
 } from "../services/sounds";
@@ -493,11 +492,9 @@ export default function DashboardPage() {
   const completeActivityLocally = useVajraStore(
     (s) => s.completeActivityLocally,
   );
-  const breakStreakLocally = useVajraStore((s) => s.breakStreakLocally);
   const applyFreezeToken = useVajraStore((s) => s.applyFreezeToken);
 
   const [animatingId, setAnimatingId] = useState<string | null>(null);
-  const [breakDialogId, setBreakDialogId] = useState<string | null>(null);
   const [quoteOverlay, setQuoteOverlay] = useState<QuoteOverlay | null>(null);
   const [showAddSheet, setShowAddSheet] = useState(false);
   const [celebratingMilestone, setCelebratingMilestone] = useState<{
@@ -547,16 +544,7 @@ export default function DashboardPage() {
     [completeActivityLocally, settings.soundEnabled, savedQuoteIds],
   );
 
-  const handleBreakConfirm = useCallback(
-    (reason: string) => {
-      if (!breakDialogId) return;
-      playBreakSound(settings.soundEnabled);
-      breakStreakLocally(breakDialogId, reason);
-      toast("Streak reset. Recorded honestly. 🙏");
-      setBreakDialogId(null);
-    },
-    [breakDialogId, breakStreakLocally, settings.soundEnabled],
-  );
+
 
   const handleApplyFreeze = useCallback(
     (activityId: string) => {
@@ -569,16 +557,6 @@ export default function DashboardPage() {
     },
     [applyFreezeToken],
   );
-
-  const breakActivity = activities.find((a) => a.id === breakDialogId);
-  const breakStreakLength = breakDialogId
-    ? (streaks[breakDialogId]?.currentStreak ?? 0)
-    : 0;
-
-  const breakActivity = activities.find((a) => a.id === breakDialogId);
-  const breakStreakLength = breakDialogId
-    ? (streaks[breakDialogId]?.currentStreak ?? 0)
-    : 0;
 
   const now = new Date();
   const dateLabel = now.toLocaleDateString("en-US", {

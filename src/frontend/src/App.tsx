@@ -217,18 +217,15 @@ function UpdateNotification() {
   const [progress, setProgress] = useState(0);
   const [offlineReady, setOfflineReady] = useState(false);
 
-  const onSWEvent = useCallback((event: any) => {
-    if (event.type === "NEED_REFRESH") {
+  const { updateServiceWorker } = useRegisterSW({
+    onNeedRefresh() {
       setShowReload(true);
-    } else if (event.type === "OFFLINE_READY") {
+    },
+    onOfflineReady() {
       setOfflineReady(true);
       setTimeout(() => setOfflineReady(false), 3000);
-    }
-  }, []);
-
-  const { updateServiceWorker } = useRegisterSW({
+    },
     onRegisterError: (error: any) => console.error("SW registration error:", error),
-    onSWEvent,
   });
 
   const handleUpdate = () => {

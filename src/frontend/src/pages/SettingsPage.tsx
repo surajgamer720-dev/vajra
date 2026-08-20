@@ -51,6 +51,7 @@ import {
 } from "../services/pushNotifications";
 import { useVajraStore } from "../store/vajraStore";
 import type { AppActivity } from "../types/index";
+import { todayString } from "../types/index";
 
 // ─── Section wrapper ──────────────────────────────────────────────────────────
 
@@ -201,7 +202,7 @@ export default function SettingsPage() {
   // On mount: check streaks if permission granted
   useEffect(() => {
     if (notificationPermission === "granted" && activities.length > 0) {
-      const today = new Date().toISOString().split("T")[0];
+      const today = todayString();
       const completedToday = new Set(
         Object.entries(streaks)
           .filter(([, s]) => s.lastCompletedDate === today)

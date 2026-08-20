@@ -7,7 +7,12 @@ import type {
   AppStreakInfo,
   AppUserProfile,
 } from "../types/index";
-import { MILESTONE_DAYS, todayString } from "../types/index";
+import {
+  MILESTONE_DAYS,
+  daysBetween,
+  todayString,
+  yesterdayString,
+} from "../types/index";
 
 // ─── Notification settings ────────────────────────────────────────────────────
 
@@ -106,22 +111,6 @@ const DEFAULT_SETTINGS: VajraSettings = {
   },
 };
 
-// ─── Date helpers ─────────────────────────────────────────────────────────────
-
-function yesterday(): string {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return d.toISOString().split("T")[0];
-}
-
-/** Number of calendar days between ISO date strings. */
-function daysBetween(from: string, to: string): number {
-  const start = Date.parse(from + "T00:00:00Z");
-  const end = Date.parse(to + "T00:00:00Z");
-  return Number.isFinite(start) && Number.isFinite(end)
-    ? Math.max(0, Math.round((end - start) / 86400000))
-    : 0;
-}
 
 // ─── Store ────────────────────────────────────────────────────────────────────
 
@@ -234,46 +223,65 @@ export const useVajraStore = create<VajraState>()(
         const prevLongest = prev?.longestStreak ?? 0;
         const prevTotal = prev?.totalDaysCompleted ?? 0;
         const lastDate = prev?.lastCompletedDate;
+        const hasActiveFreeze = prev?.freezeActiveDate != null;
 
-        // A streak is calendar-based, not a punishment for missing a tap.
-        // Tapping records the achievement but never resets or double-counts a day.
-        const elapsedDays = lastDate ? daysBetween(lastDate, today) : 0;
-        const newStreak = lastDate
-          ? prevStreak + Math.max(1, elapsedDays)
-          : 1;
+        let newStreak = 1;
+        if (lastDate) {
+          const diff = daysBetween(lastDate, today);
+          if (diff === 0) {
+            // Completed on the same day (safety fallback)
+            newStreak = Math.max(1, prevStreak);
+          } else if (diff === 1) {
+            // Consecutive day (yesterday -> today): exactly +1 streak!
+            newStreak = prevStreak + 1;
+          } else if (diff === 2 && hasActiveFreeze) {
+            // Missed 1 day (gap of 2), but freeze token protected it: +1 streak!
+            newStreak = prevStreak + 1;
+          } else {
+            // Missed 1 or more days without freeze: streak resets to 1 on this completion
+            newStreak = 1;
+          }
+        } else {
+          // First completion
+          newStreak = 1;
+        }
+
         const newLongest = Math.max(newStreak, prevLongest);
 
-        // Check for milestone
-        const isMilestone = MILESTONE_DAYS.includes(newStreak);
-        let newMilestones = state.milestones;
-        let milestoneDay: number | undefined;
+        // Check for milestone unlocks: unlock all milestone days <= newStreak not yet unlocked
+        const actMs = state.milestones[activityId] ?? [];
+        const unlockedDaySet = new Set(actMs.map((m) => m.milestoneDay));
+        const newlyUnlockedDays = MILESTONE_DAYS.filter(
+          (day) => day <= newStreak && !unlockedDaySet.has(day),
+        );
 
-        if (isMilestone) {
-          const actMs = state.milestones[activityId] ?? [];
-          const alreadyUnlocked = actMs.some(
-            (m) => m.milestoneDay === newStreak,
-          );
-          if (!alreadyUnlocked) {
-            milestoneDay = newStreak;
-            const unlock: AppMilestoneUnlock = {
-              activityId,
-              milestoneDay: newStreak,
-              unlockedAt: Date.now(),
-            };
-            newMilestones = {
-              ...state.milestones,
-              [activityId]: [...actMs, unlock],
-            };
-          }
+        let newMilestones = state.milestones;
+        let highestNewMilestoneDay: number | undefined;
+
+        if (newlyUnlockedDays.length > 0) {
+          const newUnlocks: AppMilestoneUnlock[] = newlyUnlockedDays.map((mDay) => ({
+            activityId,
+            milestoneDay: mDay,
+            unlockedAt: Date.now(),
+          }));
+          newMilestones = {
+            ...state.milestones,
+            [activityId]: [...actMs, ...newUnlocks],
+          };
+          highestNewMilestoneDay = Math.max(...newlyUnlockedDays);
         }
 
         // Award freeze token at specific milestones
         const FREEZE_TOKEN_MILESTONES = [7, 30, 100, 365];
         let newFreezeTokens = state.freezeTokens;
-        if (FREEZE_TOKEN_MILESTONES.includes(newStreak)) {
+        const tokensToEarn = newlyUnlockedDays.filter((d) =>
+          FREEZE_TOKEN_MILESTONES.includes(d),
+        ).length;
+
+        if (tokensToEarn > 0) {
           newFreezeTokens = {
             ...state.freezeTokens,
-            [activityId]: (state.freezeTokens[activityId] ?? 0) + 1,
+            [activityId]: (state.freezeTokens[activityId] ?? 0) + tokensToEarn,
           };
         }
 
@@ -282,10 +290,10 @@ export const useVajraStore = create<VajraState>()(
           currentStreak: newStreak,
           longestStreak: newLongest,
           totalDaysCompleted: prevTotal + 1,
-          freezeTokensEarned: prev?.freezeTokensEarned ?? 0,
+          freezeTokensEarned: (prev?.freezeTokensEarned ?? 0) + tokensToEarn,
           freezeTokensUsed: prev?.freezeTokensUsed ?? 0,
           lastCompletedDate: today,
-          freezeActiveDate: prev?.freezeActiveDate,
+          freezeActiveDate: undefined, // consume active freeze
         };
 
         set({
@@ -297,8 +305,8 @@ export const useVajraStore = create<VajraState>()(
 
         return {
           newStreak,
-          isNewMilestone: !!milestoneDay,
-          milestoneDay,
+          isNewMilestone: highestNewMilestoneDay != null,
+          milestoneDay: highestNewMilestoneDay,
           alreadyDone: false,
         };
       },
@@ -331,6 +339,7 @@ export const useVajraStore = create<VajraState>()(
           }),
           currentStreak: 0,
           lastCompletedDate: undefined,
+          freezeActiveDate: undefined,
         };
 
         set({
@@ -343,49 +352,81 @@ export const useVajraStore = create<VajraState>()(
       runStreakIntegrityCheck: () => {
         const state = get();
         const today = todayString();
+        const yest = yesterdayString();
         const updatedStreaks = { ...state.streaks };
+        let updatedMilestones = { ...state.milestones };
+        let updatedBreakLogs = [...state.breakLogs];
         let changed = false;
 
         for (const activity of state.activities) {
           const streak = updatedStreaks[activity.id];
-          if (!streak || streak.currentStreak === 0) continue;
+          if (!streak) continue;
 
-          const last = streak.lastCompletedDate;
-          if (!last) continue;
+          // 1. Backfill / heal any milestone that was achieved by current or longest streak
+          const highestAchieved = Math.max(
+            streak.currentStreak ?? 0,
+            streak.longestStreak ?? 0,
+          );
+          const actMs = updatedMilestones[activity.id] ?? [];
+          const unlockedSet = new Set(actMs.map((m) => m.milestoneDay));
+          const missingMilestones = MILESTONE_DAYS.filter(
+            (day) => day <= highestAchieved && !unlockedSet.has(day),
+          );
 
-          // Streak is fine if last completion was today or yesterday
-          if (last === today) continue;
+          if (missingMilestones.length > 0) {
+            const addedUnlocks: AppMilestoneUnlock[] = missingMilestones.map((mDay) => ({
+              activityId: activity.id,
+              milestoneDay: mDay,
+              unlockedAt: Date.now(),
+            }));
+            updatedMilestones[activity.id] = [...actMs, ...addedUnlocks];
+            changed = true;
+          }
 
-          // Check if freeze token was applied
-          // Freeze tokens are no longer needed to preserve a calendar streak.
+          // 2. Check if active streak has lapsed due to missed days
+          if (streak.currentStreak > 0 && streak.lastCompletedDate) {
+            const last = streak.lastCompletedDate;
 
-          // Streak broken — reset it
-          const autoBreakLog: AppBreakLog = {
-            id: `auto-break-${Date.now()}-${activity.id}`,
-            activityId: activity.id,
-            breakDate: today,
-            reason: "Missed day — streak reset automatically",
-            wasManual: false,
-            streakLengthAtBreak: streak.currentStreak,
-            createdAt: Date.now(),
-          };
+            // Alive if completed today or yesterday
+            if (last === today || last === yest) {
+              continue;
+            }
 
-          updatedStreaks[activity.id] = {
-            ...streak,
-            currentStreak: streak.currentStreak + daysBetween(last, today),
-            longestStreak: Math.max(
-              streak.longestStreak,
-              streak.currentStreak + daysBetween(last, today),
-            ),
-            // Prevent a second app launch on the same day from adding again.
-            lastCompletedDate: today,
-          };
+            const diff = daysBetween(last, today);
+            if (diff > 1) {
+              // If exactly 1 day was missed and freeze was active, keep it protected
+              if (diff === 2 && streak.freezeActiveDate) {
+                continue;
+              }
 
-          changed = true;
+              // Otherwise streak broken — record auto-break and reset currentStreak to 0
+              const autoBreakLog: AppBreakLog = {
+                id: `auto-break-${Date.now()}-${activity.id}`,
+                activityId: activity.id,
+                breakDate: today,
+                reason: "Missed day — streak reset",
+                wasManual: false,
+                streakLengthAtBreak: streak.currentStreak,
+                createdAt: Date.now(),
+              };
+
+              updatedBreakLogs.push(autoBreakLog);
+              updatedStreaks[activity.id] = {
+                ...streak,
+                currentStreak: 0,
+                freezeActiveDate: undefined,
+              };
+              changed = true;
+            }
+          }
         }
 
         if (changed) {
-          set({ streaks: updatedStreaks });
+          set({
+            streaks: updatedStreaks,
+            milestones: updatedMilestones,
+            breakLogs: updatedBreakLogs,
+          });
         }
       },
 

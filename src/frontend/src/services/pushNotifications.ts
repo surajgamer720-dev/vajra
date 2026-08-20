@@ -25,7 +25,7 @@ export async function enablePushNotifications(): Promise<PushSubscription> {
   const subscription = (await registration.pushManager.getSubscription()) ||
     (await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: base64UrlToUint8Array(publicKey),
+      applicationServerKey: base64UrlToUint8Array(publicKey) as unknown as BufferSource,
     }));
 
   const saveResponse = await fetch(PUSH_API_URL + "/api/push/subscriptions", {

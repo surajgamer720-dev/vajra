@@ -19,25 +19,35 @@ import { shareAchievement } from "../utils/shareImage";
 
 interface SheetProps {
   activity: AppActivity;
-  milestone: AppMilestoneUnlock;
+  milestoneDay: number;
+  unlockedAt?: number;
   onClose: () => void;
 }
 
-function BadgeDetailSheet({ activity, milestone, onClose }: SheetProps) {
-  const tier = getBadgeTier(milestone.milestoneDay);
-  const name = getMilestoneName(milestone.milestoneDay);
+function BadgeDetailSheet({
+  activity,
+  milestoneDay,
+  unlockedAt,
+  onClose,
+}: SheetProps) {
+  const isUnlocked = unlockedAt != null;
+  const tier = getBadgeTier(milestoneDay);
+  const name = getMilestoneName(milestoneDay);
   const userName = useVajraStore((s) => s.userProfile?.name);
-  const dateStr = new Date(milestone.unlockedAt).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  const dateStr = unlockedAt
+    ? new Date(unlockedAt).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : null;
 
   async function handleShare() {
+    if (!isUnlocked) return;
     await shareAchievement(
       userName ?? "You",
       activity.name,
-      milestone.milestoneDay,
+      milestoneDay,
       tier,
     );
   }
@@ -84,9 +94,9 @@ function BadgeDetailSheet({ activity, milestone, onClose }: SheetProps) {
               transition={{ delay: 0.1, type: "spring", stiffness: 280 }}
             >
               <BadgeSVG
-                day={milestone.milestoneDay}
+                day={milestoneDay}
                 tier={tier}
-                isLocked={false}
+                isLocked={!isUnlocked}
                 size={140}
               />
             </motion.div>
@@ -94,9 +104,17 @@ function BadgeDetailSheet({ activity, milestone, onClose }: SheetProps) {
             <div className="text-center">
               <p className="text-lg font-bold text-foreground">{name}</p>
               <p className="text-muted-foreground text-sm mt-1">
-                {activity.emoji} {activity.name} — Day {milestone.milestoneDay}
+                {activity.emoji} {activity.name} — Day {milestoneDay}
               </p>
-              <p className="text-muted-foreground text-xs mt-2">{dateStr}</p>
+              {dateStr ? (
+                <p className="text-muted-foreground text-xs mt-2">
+                  Unlocked on {dateStr}
+                </p>
+              ) : (
+                <p className="text-muted-foreground text-xs mt-2">
+                  Reach a {milestoneDay}-day streak on {activity.name} to unlock this milestone.
+                </p>
+              )}
             </div>
 
             <div className="flex items-center gap-2 mt-1">
@@ -122,19 +140,30 @@ function BadgeDetailSheet({ activity, milestone, onClose }: SheetProps) {
                           : "oklch(0.85 0.15 220)",
                 }}
               >
-                {tier}
+                {isUnlocked ? `${tier} tier` : `Locked (${tier})`}
               </Badge>
             </div>
 
-            <Button
-              type="button"
-              data-ocid="trophy.badge_detail.share_button"
-              onClick={handleShare}
-              className="mt-3 w-full max-w-xs gap-2"
-            >
-              <Share2 className="w-4 h-4" />
-              Share this milestone
-            </Button>
+            {isUnlocked ? (
+              <Button
+                type="button"
+                data-ocid="trophy.badge_detail.share_button"
+                onClick={handleShare}
+                className="mt-3 w-full max-w-xs gap-2"
+              >
+                <Share2 className="w-4 h-4" />
+                Share this milestone
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                className="mt-3 w-full max-w-xs gap-2"
+              >
+                Keep Going 🔥
+              </Button>
+            )}
           </div>
         </motion.div>
       </motion.div>
@@ -168,7 +197,8 @@ export default function TrophyPage() {
   const [selectedTab, setSelectedTab] = useState(0);
   const [selectedBadge, setSelectedBadge] = useState<{
     activity: AppActivity;
-    milestone: AppMilestoneUnlock;
+    milestoneDay: number;
+    unlockedAt?: number;
   } | null>(null);
 
   const totalUnlocked = Object.values(allMilestones).reduce(
@@ -284,16 +314,17 @@ export default function TrophyPage() {
                     stiffness: 260,
                   }}
                   className={cn(
-                    "flex flex-col items-center gap-1 p-2 rounded-2xl border transition-smooth",
+                    "flex flex-col items-center gap-1 p-2 rounded-2xl border transition-smooth cursor-pointer",
                     unlocked
-                      ? "cursor-pointer bg-secondary/40 border-primary/20 hover:border-primary/50 hover:bg-secondary/70"
-                      : "bg-secondary/20 border-border/30 opacity-60",
+                      ? "bg-secondary/40 border-primary/20 hover:border-primary/50 hover:bg-secondary/70"
+                      : "bg-secondary/20 border-border/30 opacity-60 hover:opacity-90 hover:border-border/60",
                   )}
                   onClick={() => {
-                    if (unlocked && unlock) {
+                    if (currentActivity) {
                       setSelectedBadge({
                         activity: currentActivity,
-                        milestone: unlock,
+                        milestoneDay: day,
+                        unlockedAt: unlock?.unlockedAt,
                       });
                     }
                   }}
@@ -304,9 +335,13 @@ export default function TrophyPage() {
                     isLocked={!unlocked}
                     size={56}
                   />
-                  {dateLabel && (
+                  {dateLabel ? (
                     <span className="text-[9px] text-primary/80 font-medium text-center leading-tight">
                       {dateLabel}
+                    </span>
+                  ) : (
+                    <span className="text-[9px] text-muted-foreground/60 font-medium text-center leading-tight">
+                      Day {day}
                     </span>
                   )}
                 </motion.li>
@@ -320,10 +355,12 @@ export default function TrophyPage() {
       {selectedBadge && (
         <BadgeDetailSheet
           activity={selectedBadge.activity}
-          milestone={selectedBadge.milestone}
+          milestoneDay={selectedBadge.milestoneDay}
+          unlockedAt={selectedBadge.unlockedAt}
           onClose={() => setSelectedBadge(null)}
         />
       )}
     </div>
   );
 }
+

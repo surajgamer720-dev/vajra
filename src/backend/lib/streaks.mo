@@ -52,12 +52,12 @@ module {
           case (#gapOne) {
             // Gap of exactly 1 missed day — check if freeze covers it
             switch (streak.freezeActiveDate) {
-              case (?_) { streak.currentStreak + 2 };
-              case null { streak.currentStreak + 2 };
+              case (?_) { streak.currentStreak + 1 };
+              case null { 1 };
             };
           };
           case (#gapMany) {
-            streak.currentStreak + Helpers.daysBetween(prevDate, date)
+            1
           };
           case (#future) { streak.currentStreak };
         };

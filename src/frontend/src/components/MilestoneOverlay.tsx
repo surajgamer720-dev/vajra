@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { AnimatePresence, motion } from "motion/react";
-import type { Easing } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { getRandomQuote } from "../data/quotes";
 import { playMilestoneSound } from "../services/sounds";

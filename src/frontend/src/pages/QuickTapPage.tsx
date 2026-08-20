@@ -2,9 +2,15 @@ import { Link } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useState } from "react";
 import { FlameIcon } from "../components/FlameIcon";
-import { playCompletionSound } from "../services/sounds";
+import { MilestoneOverlay } from "../components/MilestoneOverlay";
+import { playCompletionSound, playMilestoneSound } from "../services/sounds";
 import { useVajraStore } from "../store/vajraStore";
-import { getFlameLevel, todayString } from "../types/index";
+import {
+  type AppMilestoneUnlock,
+  getBadgeTier,
+  getFlameLevel,
+  todayString,
+} from "../types/index";
 
 // ─── Quick Tap Card ────────────────────────────────────────────────────────────
 
@@ -123,19 +129,40 @@ export default function QuickTapPage() {
   const streaks = useVajraStore((s) => s.streaks);
   const completions = useVajraStore((s) => s.completions);
   const settings = useVajraStore((s) => s.settings);
+  const userProfile = useVajraStore((s) => s.userProfile);
   const completeActivityLocally = useVajraStore(
     (s) => s.completeActivityLocally,
   );
 
   const [justDoneIds, setJustDoneIds] = useState<Set<string>>(new Set());
+  const [celebratingMilestone, setCelebratingMilestone] = useState<{
+    activityId: string;
+    milestone: AppMilestoneUnlock;
+  } | null>(null);
+
   const today = todayString();
   const todayCompletions = completions[today] ?? [];
 
   const handleTap = useCallback(
     (activityId: string) => {
       setJustDoneIds((prev) => new Set([...prev, activityId]));
-      playCompletionSound(settings.soundEnabled);
-      completeActivityLocally(activityId);
+
+      const result = completeActivityLocally(activityId);
+
+      if (result.alreadyDone) return;
+
+      if (result.isNewMilestone && result.milestoneDay != null) {
+        playMilestoneSound(settings.soundEnabled);
+        const actMs = useVajraStore.getState().milestones[activityId] ?? [];
+        const unlock = actMs.find(
+          (m) => m.milestoneDay === result.milestoneDay,
+        );
+        if (unlock) {
+          setCelebratingMilestone({ activityId, milestone: unlock });
+        }
+      } else {
+        playCompletionSound(settings.soundEnabled);
+      }
 
       // Clear "just done" flash after 1.5s
       setTimeout(() => {
@@ -151,7 +178,7 @@ export default function QuickTapPage() {
 
   return (
     <div
-      className="min-h-screen bg-background flex flex-col"
+      className="min-h-screen bg-background flex flex-col relative"
       data-ocid="quicktap.page"
     >
       {/* Minimal header */}
@@ -215,6 +242,27 @@ export default function QuickTapPage() {
           Open Full App →
         </Link>
       </footer>
+
+      {/* Milestone Overlay */}
+      {celebratingMilestone &&
+        (() => {
+          const act = activities.find(
+            (a) => a.id === celebratingMilestone.activityId,
+          );
+          const tier = getBadgeTier(
+            celebratingMilestone.milestone.milestoneDay,
+          );
+          return (
+            <MilestoneOverlay
+              milestoneDay={celebratingMilestone.milestone.milestoneDay}
+              activityName={act?.name ?? "Activity"}
+              badgeTier={tier}
+              userName={userProfile?.name ?? "Warrior"}
+              onContinue={() => setCelebratingMilestone(null)}
+              onShare={() => {}}
+            />
+          );
+        })()}
     </div>
   );
 }

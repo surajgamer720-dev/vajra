@@ -140,8 +140,31 @@ export function getMilestoneName(day: number): string {
   return names[day] ?? `${day} Day Milestone`;
 }
 
+export function toLocalDateString(d: Date = new Date()): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export function todayString(): string {
-  return new Date().toISOString().split("T")[0];
+  return toLocalDateString(new Date());
+}
+
+export function yesterdayString(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return toLocalDateString(d);
+}
+
+export function daysBetween(from: string, to: string): number {
+  if (!from || !to) return 0;
+  const [y1, m1, d1] = from.split("-").map(Number);
+  const [y2, m2, d2] = to.split("-").map(Number);
+  if (!y1 || !m1 || !d1 || !y2 || !m2 || !d2) return 0;
+  const date1 = new Date(y1, m1 - 1, d1).getTime();
+  const date2 = new Date(y2, m2 - 1, d2).getTime();
+  return Math.max(0, Math.round((date2 - date1) / 86400000));
 }
 
 export function yearMonthString(date?: Date): string {

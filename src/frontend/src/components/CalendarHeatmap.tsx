@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { cn } from "../lib/utils";
+import { toLocalDateString } from "../types/index";
 
 interface CompletionDay {
   date: string; // YYYY-MM-DD
@@ -64,7 +65,7 @@ function buildWeeks(
   while (current <= today) {
     const week: (CompletionDay | null)[] = [];
     for (let d = 0; d < 7; d++) {
-      const dateStr = current.toISOString().split("T")[0];
+      const dateStr = toLocalDateString(current);
       const isInRange = current <= today;
       week.push(
         isInRange
